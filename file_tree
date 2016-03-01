@@ -37,5 +37,8 @@ else
 	directory="."
 fi	
 
+# file_tree.py should be in the same directory as this file.
+# We use `which file_tree` here with the assumption that this script has
+# been copied to a bin folder (preferably, /usr/local/bin)
 python `which file_tree`.py "$directory" $show_hidden $recurse $line_by_line
 
