@@ -1,66 +1,81 @@
-"""
-@author: francisparan
-This script simulates the tree command in Linux,
-but with an extra option for printing file contents
-one by one.
-"""
 
 from __future__ import print_function
 import os
 import sys
 
+# Python 3: raw_input => input
 if sys.version_info.major == 3:
-    from builtins import input
     raw_input = input
 
-def __files(directory, show_hidden=False):
+
+class Tree:
+
+    def __init__(self, depth=0, line_by_line=0):
+        self.depth = depth
+        self.line_by_line = line_by_line
+        self.__end = '\n'
+        self.level = 1
+        self.files = 0
+        self.directories = 0
+
+    def get_files(self, directory, show_hidden=False):
+
+        if not os.path.isdir(directory):
+            raise Exception('Directory not found: %s' % directory)
+
+        files = os.listdir(directory)
+
+        return filter(lambda f: not f.startswith('.'), files) if not show_hidden else files
+
+    def display_file(self, file_name, padding=0):
+        pad = ''.rjust(padding)
+        file_output = "{} {}".format('-'.rjust(3), file_name)
+        print(pad + file_output, end = self.__end)
+
+    def print_tree(self, directory='.', show_hidden=False, recurse=False, level=1):
+
+        indent = 5 * (level-1)
+        self.files += 1
+
+        for f in self.get_files(directory, show_hidden):
+
+            if self.line_by_line:
+                self.__end = ' '
+            
+            self.display_file(f, padding=indent)
+
+            if self.line_by_line and raw_input('').lower() == 'q':
+                raise Exception
+
+            path = os.path.join(directory, f)
+
+            if recurse and (os.path.isdir(path) and os.access(path, os.R_OK)):
+                if self.depth and level >= self.depth:
+                    continue
+                self.print_tree(path, show_hidden=show_hidden, recurse=recurse, level=level + 1)
+
+
+def tree(directory='.', show_hidden=False, recurse=False, line_by_line=False, depth=0):
     if not os.path.isdir(directory):
+        if os.path.isfile(directory):
+            raise Exception('%s is a file' % directory)
         raise Exception('Directory not found: %s' % directory)
-    files = os.listdir(directory)
-    return filter(lambda f: not f.startswith('.'), files) if not show_hidden else files
-                    
-
-
-def print_files(directory='.', show_hidden=False, recurse=False, padding=0):
-    pad = ''.rjust(padding)
-    
-    for f in __files(directory, show_hidden):
-        path = os.path.join(directory, f)
-        file_output = "{} {}".format('-'.rjust(3), f)
-        
-        yield pad + file_output
-        
-        if recurse and (os.path.isdir(path) and os.access(path, os.R_OK)):
-            for y in print_files(path, show_hidden, recurse, padding+5):
-                yield y
-
-
-def tree(directory, show_hidden=False, recurse=False, line_by_line=False):
 
     print(directory)
+    Tree(depth, line_by_line).print_tree(directory, show_hidden, recurse)
 
-    for x in print_files(directory, show_hidden, recurse):
+if __name__ == '__main__':
+    try:
+        script, directory, show_hidden, recurse, depth, line_by_line = sys.argv
+        show_hidden = bool(int(show_hidden))
+        recurse = bool(int(recurse))
+        line_by_line = bool(int(line_by_line))
+        depth = int(depth)
 
-        if line_by_line:
-            print(x, end= ' ')
+        tree(directory, show_hidden, recurse, line_by_line, depth)
 
-            if raw_input('').lower() == 'q':
-                print('stopped...')
-                break
-        else:
-            print(x)
-
-try:
-    script, directory, show_hidden, recurse, line_by_line = sys.argv
-
-    show_hidden = bool(int(show_hidden))
-    recurse = bool(int(recurse))
-    line_by_line = bool(int(line_by_line))
-
-    tree(directory, show_hidden, recurse, line_by_line)
-
-except ValueError as ve:
-    print('file_tree: Invalid argument set')
-    # print(ve)
-except:
-    print('stopped...')
+    except ValueError as ve:
+        print("file_tree: Invalid argument set")
+    except Exception as e:
+        print(e)
+        print("stopped...")

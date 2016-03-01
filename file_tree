@@ -14,9 +14,23 @@ function argv() {
 show_hidden="0"
 recurse="0"
 line_by_line="0"
+depth="0"
 
-while getopts :hlr OPTION ; do
+while getopts d:hlr OPTION ; do
 	case $OPTION in
+		d) # -d print files up to a certain depth
+		    # in the tree
+		    if [[ $OPTARG =~ [0-9] ]]
+		    then
+			    depth=$OPTARG
+			    # echo "-d was triggered, Parameter: $OPTARG"
+		    else
+			    echo "-$OPTION: invalid argument value $OPTARG"
+			    exit 1
+		    fi;;
+		:)
+		    echo "Option -$OPTARG requires an argument."
+		    exit 1;;
 		h) # -h show hidden files
 		    show_hidden="1" ;;
 		l) # -l line by line
@@ -34,11 +48,11 @@ shift $(($OPTIND-1))
 if argv $#; then
 	directory=${1}
 else
-	directory="."
+	directory=`pwd`
 fi	
 
-# file_tree.py should be in the same directory as this file.
+# file_tree.py should be in the same directory as this file.                                     
 # We use `which file_tree` here with the assumption that this script has
-# been copied to a bin folder (preferably, /usr/local/bin)
-python `which file_tree`.py "$directory" $show_hidden $recurse $line_by_line
+# been copied to a bin folder (preferably, /usr/local/bin).
+python `which file_tree`.py "$directory" $show_hidden $recurse $depth $line_by_line
 
