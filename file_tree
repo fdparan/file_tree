@@ -16,8 +16,11 @@ recurse="0"
 line_by_line="0"
 depth="0"
 
-while getopts d:hlr OPTION ; do
+while getopts ad:hlr OPTION ; do
 	case $OPTION in
+		a) # -a = -hr
+		    show_hidden="1"
+		    recurse="1" ;;
 		d) # -d print files up to a certain depth
 		    # in the tree
 		    if [[ $OPTARG =~ [0-9] ]]
